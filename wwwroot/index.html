@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>JournalSquare</title>
+    <base href="/" />
+    <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="JournalSquare.styles.css" />
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+
+</head>
+
+<body>
+
+    <div class="status-bar-safe-area"></div>
+
+    <div id="app">Loading...</div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.webview.js" autostart="false"></script>
+    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+    <script>
+        window.initMarkdownEditor = (textareaId) => {
+            if (!window._editors) {
+                window._editors = {};
+            }
+
+            const textarea = document.getElementById(textareaId);
+            if (!textarea) return;
+
+            // ✅ Destroy existing editor if it exists
+            if (window._editors[textareaId]) {
+                window._editors[textareaId].toTextArea();
+                delete window._editors[textareaId];
+            }
+
+            // ✅ Create fresh editor
+            window._editors[textareaId] = new EasyMDE({
+                element: textarea,
+                spellChecker: false,
+                status: false,
+                toolbar: [
+                    "bold", "italic", "heading",
+                    "|",
+                    "unordered-list", "ordered-list",
+                    "|",
+                    "quote", "link", "code",
+                    "|",
+                    "preview"
+                ]
+            });
+        };
+
+        window.getMarkdownValue = (textareaId) => {
+            if (!window._editors || !window._editors[textareaId]) return "";
+            return window._editors[textareaId].value();
+        };
+    </script>
+
+
+</body>
+
+</html>

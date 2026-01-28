@@ -1,0 +1,80 @@
+﻿.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.card {
+    padding: 1rem;
+    border-radius: 10px;
+    background: #f6f6f6;
+}
+
+.card.highlight {
+    background: #fff3cd;
+}
+
+.big {
+    font-size: 1.8rem;
+    font-weight: bold;
+}
+
+.recent-list {
+    list-style: none;
+    padding: 0;
+}
+
+.recent-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+/* 🌞 Light theme */
+.app-container.light {
+    background: #ffffff;
+    color: #000000;
+}
+
+/* 🌙 Dark theme */
+.app-container.dark {
+    background: #121212;
+    color: #e0e0e0;
+}
+
+/* Cards, panels */
+.app-container.dark .card {
+    background: #1e1e1e;
+}
+
+.app-container.dark input,
+.app-container.dark textarea,
+.app-container.dark select {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+}
+/* DARK MODE */
+body.dark {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark aside {
+    background-color: #1e1e1e !important;
+}
+
+body.dark section {
+    background-color: #121212 !important;
+}
+
+body.dark .card,
+body.dark table,
+body.dark input,
+body.dark textarea,
+body.dark select {
+    background-color: #1f1f1f !important;
+    color: #e0e0e0 !important;
+    border-color: #333 !important;
+}
+

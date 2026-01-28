@@ -1,0 +1,99 @@
+﻿@inherits LayoutComponentBase
+@using JournalSquare.Services
+
+@inject NavigationManager Nav
+@inject AuthService AuthService
+
+<div style="display:flex; height:100vh; font-family:Arial, sans-serif; background:#f5f5f5;">
+
+    <!-- SIDEBAR -->
+    <aside style="
+        width:220px;
+        background:#cfc8c4;
+        padding:20px;
+        display:flex;
+        flex-direction:column;
+        justify-content:space-between;
+    ">
+
+        <div>
+            <!-- USER INFO -->
+            <div style="text-align:center; margin-bottom:30px;">
+                <div style="
+                    width:60px;
+                    height:60px;
+                    background:#b5ada9;
+                    border-radius:50%;
+                    margin:0 auto 10px auto;">
+                </div>
+
+                <strong>@userName</strong>
+                <p style="font-size:12px; color:#555;">Journal User</p>
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav style="display:flex; flex-direction:column; gap:12px;">
+                <NavLink href="/dashboard">Dashboard</NavLink>
+                <NavLink href="/entry">New Entry</NavLink>
+                <NavLink href="/myjournals">My Journals</NavLink>
+                <NavLink href="/calendar">Calendar</NavLink>
+                <NavLink href="/settings">Settings</NavLink>
+            </nav>
+        </div>
+
+        <!-- LOGOUT -->
+        <button @onclick="Logout"
+                style="
+                    padding:8px;
+                    border:none;
+                    border-radius:6px;
+                    background:#ffffff;
+                    cursor:pointer;
+                    width:100%;
+                ">
+            Logout
+        </button>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <section style="flex:1; padding:30px; overflow:auto;">
+
+        <!-- TOP BAR -->
+        <header style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            background:#7a7471;
+            color:white;
+            padding:15px 20px;
+            border-radius:6px;
+            margin-bottom:20px;
+        ">
+            <h2 style="margin:0;">Welcome @userName!</h2>
+        </header>
+
+        <!-- PAGE BODY -->
+        <main>
+            @Body
+        </main>
+
+    </section>
+</div>
+
+@code {
+    private string userName = "User";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 👤 Load username ONLY (no theme logic)
+        var name = await AuthService.GetUserNameAsync();
+        if (!string.IsNullOrWhiteSpace(name))
+            userName = name;
+    }
+
+    private void Logout()
+    {
+        Nav.NavigateTo("/", true);
+    }
+}

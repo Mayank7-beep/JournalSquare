@@ -1,0 +1,129 @@
+@page "/"
+@layout NoLayout
+@using JournalSquare.Services
+
+@inject NavigationManager Nav
+@inject AuthService AuthService
+
+<div style="display:flex; height:100vh; font-family:Arial, sans-serif;">
+
+    <!-- LEFT: SIGN IN -->
+    <div style="
+        flex:1;
+        background:white;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    ">
+        <div style="width:320px; text-align:center;">
+
+            <!-- ✅ LOGO ADDED HERE -->
+            <img src="images/JournalSquare.png"
+                 alt="MyJournal Logo"
+                 style="
+                    width:220px;
+                    height:auto;
+                    margin-bottom:16px;
+                 " />
+
+            <h2 style="margin-bottom:10px;">Sign in to MyJournal</h2>
+
+            <!-- dots -->
+            <div style="margin-bottom:10px;">
+                <span style="height:10px;width:10px;background:#ccc;border-radius:50%;display:inline-block;margin:3px;"></span>
+                <span style="height:10px;width:10px;background:#ccc;border-radius:50%;display:inline-block;margin:3px;"></span>
+                <span style="height:10px;width:10px;background:#ccc;border-radius:50%;display:inline-block;margin:3px;"></span>
+            </div>
+
+            <input placeholder="Username"
+                   @bind="userName"
+                   style="width:100%;padding:10px;margin-bottom:10px;background:#eae6e3;border:none;" />
+
+            <input type="password"
+                   placeholder="PIN"
+                   @bind="pin"
+                   style="width:100%;padding:10px;margin-bottom:20px;background:#eae6e3;border:none;" />
+
+            <button style="
+                width:140px;
+                padding:10px;
+                border:none;
+                border-radius:20px;
+                background:#bfb9b6;
+                font-weight:bold;
+                cursor:pointer;
+            "
+            @onclick="HandleSignIn">
+                SIGN IN
+            </button>
+
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <p style="color:red;margin-top:15px;">@error</p>
+            }
+
+        </div>
+    </div>
+
+    <!-- RIGHT: HELLO FRIEND -->
+    <div style="
+        flex:1;
+        background:#c6beb9;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    ">
+        <div style="text-align:center;">
+            <h1 style="margin-bottom:10px;">Hello, Friend!</h1>
+
+            <button style="
+                padding:10px 25px;
+                border:none;
+                border-radius:20px;
+                background:white;
+                cursor:pointer;
+                font-weight:bold;
+            "
+            @onclick="GoSignup">
+                Sign up
+            </button>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string userName = string.Empty;
+    private string pin = string.Empty;
+    private string error = string.Empty;
+
+    private async Task HandleSignIn()
+    {
+        error = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(pin))
+        {
+            error = "Please enter username and PIN";
+            return;
+        }
+
+        var isValid = await AuthService.ValidateLoginAsync(
+            userName.Trim(),
+            pin.Trim()
+        );
+
+        if (isValid)
+        {
+            Nav.NavigateTo("/dashboard", true);
+        }
+        else
+        {
+            error = "Invalid username or PIN";
+        }
+    }
+
+    private void GoSignup()
+    {
+        Nav.NavigateTo("/signup");
+    }
+}

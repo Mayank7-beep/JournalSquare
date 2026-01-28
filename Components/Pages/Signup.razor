@@ -1,0 +1,71 @@
+@page "/signup"
+@layout NoLayout
+@using JournalSquare.Services
+
+@inject NavigationManager Nav
+@inject AuthService AuthService
+
+<div style="display:flex; height:100vh; font-family:Arial, sans-serif;">
+
+    <!-- LEFT -->
+    <div style="flex:1; background:#c6beb9; display:flex; align-items:center; justify-content:center;">
+        <h1>Hello!</h1>
+    </div>
+
+    <!-- RIGHT -->
+    <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+        <div style="width:300px;">
+
+            <h2>Create Account</h2>
+
+            <input placeholder="Username"
+                   @bind="userName"
+                   style="width:100%; padding:10px; margin-bottom:10px;" />
+
+            <input type="password"
+                   placeholder="PIN (min 4 digits)"
+                   @bind="pin"
+                   style="width:100%; padding:10px; margin-bottom:15px;" />
+
+            <!-- IMPORTANT: type="button" -->
+            <button type="button"
+                    style="width:100%; padding:10px;"
+                    @onclick="OnSignupClicked">
+                SIGN UP
+            </button>
+
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <p style="color:red; margin-top:10px;">@message</p>
+            }
+
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private string userName = "";
+    private string pin = "";
+    private string message = "";
+
+    private async Task OnSignupClicked()
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            message = "Username required";
+            return;
+        }
+
+        if (pin.Length < 4)
+        {
+            message = "PIN must be at least 4 digits";
+            return;
+        }
+
+        await AuthService.SetUserAsync(userName, pin);
+
+        Nav.NavigateTo("/", true);
+
+    }
+}

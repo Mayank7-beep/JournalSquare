@@ -1,0 +1,198 @@
+@page "/entry"
+@using JournalSquare.Models
+@using JournalSquare.Services
+
+@inject JournalService JournalService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+
+<h2 style="margin-bottom:16px;">New Journal Entry</h2>
+
+<div style="
+    width:100%;
+    background:white;
+    padding:24px;
+    border-radius:8px;
+">
+
+    <!-- TITLE + DATE -->
+    <div style="display:flex; gap:16px; margin-bottom:20px;">
+        <input placeholder="Title"
+               @bind="entry.Title"
+               style="flex:2; padding:10px;" />
+
+        <input type="date"
+               @bind="entry.EntryDate"
+               style="flex:1; padding:10px;" />
+    </div>
+
+    <!-- MARKDOWN JOURNAL -->
+    <div style="margin-bottom:24px;">
+        <label style="font-weight:bold;">Journal Entry (Markdown supported)</label>
+
+        <textarea id="markdownEditor"
+          class="journal-textarea">
+</textarea>
+
+    </div>
+
+    <!-- MOODS -->
+    <div style="display:flex; gap:24px; margin-bottom:24px;">
+
+        <!-- PRIMARY -->
+        <div style="flex:1;">
+            <label>😊 Primary Mood *</label>
+            <select @bind="entry.PrimaryMood" style="width:100%; padding:8px;">
+                <option value="">Select</option>
+                <option>Happy</option>
+                <option>Excited</option>
+                <option>Relaxed</option>
+                <option>Grateful</option>
+                <option>Confident</option>
+
+                <option>Calm</option>
+                <option>Thoughtful</option>
+                <option>Curious</option>
+                <option>Nostalgic</option>
+                <option>Bored</option>
+
+                <option>Sad</option>
+                <option>Angry</option>
+                <option>Stressed</option>
+                <option>Lonely</option>
+                <option>Anxious</option>
+            </select>
+        </div>
+
+        <!-- SECONDARY -->
+        <div style="flex:2;">
+            <label>😐 Secondary Moods (max 2)</label>
+
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+                @foreach (var mood in allMoods)
+                {
+                    <button type="button"
+                            style="padding:6px 12px; border-radius:16px;
+                                   background:@(selectedSecondary.Contains(mood) ? "#888" : "#eee");"
+                            @onclick="() => ToggleSecondaryMood(mood)">
+                        @mood
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- TAGS -->
+    <div style="margin-bottom:24px;">
+        <label>🏷 Tags</label>
+
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+            @foreach (var tag in predefinedTags)
+            {
+                <button type="button"
+                        style="padding:6px 14px; border-radius:16px;
+                               background:@(selectedTags.Contains(tag) ? "#6e6e6e" : "#eaeaea");
+                               color:@(selectedTags.Contains(tag) ? "white" : "black");"
+                        @onclick="() => ToggleTag(tag)">
+                    @tag
+                </button>
+            }
+        </div>
+
+        <!-- CUSTOM TAG -->
+        <input placeholder="Add custom tag"
+               @bind="customTag"
+               style="margin-top:10px; padding:8px;"
+               @onkeydown="HandleCustomTag" />
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="display:flex; justify-content:flex-end; gap:12px;">
+        <button @onclick="Cancel">Cancel</button>
+        <button style="background:#6e6e6e; color:white;" @onclick="Save">Save Entry</button>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("initMarkdownEditor", "markdownEditor");
+    }
+
+
+    private JournalEntry entry = new()
+    {
+        EntryDate = DateTime.Today,
+        CreatedAt = DateTime.Now,
+        UpdatedAt = DateTime.Now
+    };
+
+    private List<string> selectedTags = new();
+    private List<string> selectedSecondary = new();
+
+    private string customTag = "";
+
+    private readonly List<string> predefinedTags = new()
+    {
+        "Work", "Studies", "Family", "Friends", "Health", "Fitness",
+        "Travel", "Finance", "Self-care", "Music", "Writing", "Reflection"
+    };
+
+    private readonly List<string> allMoods = new()
+    {
+        "Happy","Excited","Relaxed","Grateful","Confident",
+        "Calm","Thoughtful","Curious","Nostalgic","Bored",
+        "Sad","Angry","Stressed","Lonely","Anxious"
+    };
+
+    private void ToggleTag(string tag)
+    {
+        if (selectedTags.Contains(tag))
+            selectedTags.Remove(tag);
+        else
+            selectedTags.Add(tag);
+    }
+
+    private void ToggleSecondaryMood(string mood)
+    {
+        if (selectedSecondary.Contains(mood))
+            selectedSecondary.Remove(mood);
+        else if (selectedSecondary.Count < 2)
+            selectedSecondary.Add(mood);
+    }
+
+    private void HandleCustomTag(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(customTag))
+        {
+            selectedTags.Add(customTag.Trim());
+            customTag = "";
+        }
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrEmpty(entry.PrimaryMood))
+            return;
+
+        // ✅ GET MARKDOWN CONTENT FROM EDITOR
+        entry.Content = await JS.InvokeAsync<string>(
+            "getMarkdownValue",
+            "markdownEditor"
+        );
+
+        entry.Tags = string.Join(", ", selectedTags);
+        entry.SecondaryMoods = string.Join(", ", selectedSecondary);
+        entry.UpdatedAt = DateTime.Now;
+
+        await JournalService.SaveEntryAsync(entry);
+        Nav.NavigateTo("/MyJournals");
+    }
+
+
+    private void Cancel()
+    {
+        Nav.NavigateTo("/MyJournals");
+    }
+}

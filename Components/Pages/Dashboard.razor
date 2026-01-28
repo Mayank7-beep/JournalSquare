@@ -1,0 +1,141 @@
+@page "/dashboard"
+
+@using JournalSquare.Models
+@using JournalSquare.Services
+@using JournalSquare.Services.Analytics
+
+@inject JournalService JournalService
+@inject StreakService StreakService
+@inject AnalyticsService AnalyticsService
+@inject NavigationManager Nav
+
+<h1>Dashboard</h1>
+
+<!-- 🔥 MAIN STATS -->
+<div class="dashboard-grid">
+
+    <div class="card highlight">
+        <h3>Current Streak</h3>
+        <p class="big">@currentStreak 🔥 days</p>
+    </div>
+
+    <div class="card">
+        <h3>Longest Streak</h3>
+        <p class="big">@longestStreak 🏆</p>
+    </div>
+
+    <div class="card">
+        <h3>Total Entries</h3>
+        <p class="big">@totalEntries</p>
+    </div>
+
+    <div class="card">
+        <h3>Avg Words / Entry</h3>
+        <p class="big">@avgWords</p>
+    </div>
+
+    <div class="card">
+        <h3>Top Mood</h3>
+        <p class="big">@topMood</p>
+    </div>
+
+</div>
+
+<!-- 🆕 SECOND ROW (NOT CONGESTED) -->
+<div class="dashboard-grid" style="margin-top:16px; grid-template-columns: repeat(3, 1fr);">
+
+    <div class="card">
+        <h3>Missed Days</h3>
+        <p class="big">@missedDays ❌</p>
+    </div>
+
+    <div class="card">
+        <h3>Most Used Tag</h3>
+        <p class="big">@topTag 🏷️</p>
+    </div>
+
+    <div class="card">
+        <h3>Tag Breakdown</h3>
+
+        @if (tagBreakdown.Count == 0)
+        {
+            <p>—</p>
+        }
+        else
+        {
+            @foreach (var tag in tagBreakdown)
+            {
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <span>@tag.Key</span>
+                    <span>@tag.Value</span>
+                </div>
+            }
+        }
+    </div>
+
+</div>
+
+<hr />
+
+<!-- 🕒 RECENT ENTRIES -->
+<h2>Recent Entries</h2>
+
+@if (recentEntries.Count == 0)
+{
+    <p>No entries yet.</p>
+}
+else
+{
+    <ul class="recent-list">
+        @foreach (var entry in recentEntries)
+        {
+            <li class="recent-item">
+                <strong>@entry.Title</strong>
+                <span>@entry.EntryDate.ToShortDateString()</span>
+
+                <button @onclick="() => OpenEntry(entry.EntryDate)">
+                    Open
+                </button>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private int currentStreak;
+    private int longestStreak;
+
+    private int totalEntries;
+    private int avgWords;
+    private string topMood = "—";
+
+    private int missedDays;
+    private string topTag = "—";
+    private Dictionary<string, int> tagBreakdown = new();
+
+    private List<JournalEntry> recentEntries = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 🔥 Streaks
+        currentStreak = await StreakService.GetCurrentStreakAsync();
+        longestStreak = await StreakService.GetLongestStreakAsync();
+
+        // 📊 Analytics
+        totalEntries = await AnalyticsService.GetTotalEntriesAsync();
+        avgWords = await AnalyticsService.GetAverageWordCountAsync();
+        topMood = await AnalyticsService.GetMostCommonMoodAsync();
+
+        missedDays = await AnalyticsService.GetMissedDaysAsync();
+        topTag = await AnalyticsService.GetMostUsedTagAsync();
+        tagBreakdown = await AnalyticsService.GetTagBreakdownAsync();
+
+        // 🕒 Recent entries
+        recentEntries = await JournalService.GetPagedEntriesAsync(1, 5);
+    }
+
+    private void OpenEntry(DateTime date)
+    {
+        Nav.NavigateTo($"/entry?date={date:yyyy-MM-dd}");
+    }
+}

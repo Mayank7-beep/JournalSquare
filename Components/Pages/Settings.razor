@@ -1,0 +1,102 @@
+@page "/settings"
+@using JournalSquare.Services
+
+
+@inject AuthService AuthService
+
+<h2 style="margin-bottom:10px;">Settings</h2>
+<hr />
+
+<div style="
+    max-width:600px;
+    background:#f6f2ef;
+    padding:20px;
+    border-radius:6px;
+">
+
+    <h3 style="margin-bottom:15px;">Account Settings</h3>
+
+    <!-- 🌙 DARK MODE -->
+    
+
+    <!-- 🔐 CHANGE PIN -->
+    <div style="
+        background:#d8d2ce;
+        padding:15px;
+        border-radius:6px;
+        margin-bottom:20px;
+    ">
+        <label style="font-weight:bold;">Username</label>
+        <input @bind="userName"
+               placeholder="Enter username"
+               style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:4px;" />
+
+        <label style="font-weight:bold;">Old PIN</label>
+        <input type="password"
+               @bind="oldPin"
+               placeholder="Enter old PIN"
+               style="width:100%;padding:8px;margin-bottom:10px;border:none;border-radius:4px;" />
+
+        <label style="font-weight:bold;">New PIN</label>
+        <input type="password"
+               @bind="newPin"
+               placeholder="Enter new PIN"
+               style="width:100%;padding:8px;margin-bottom:12px;border:none;border-radius:4px;" />
+
+        <button style="
+            padding:8px 18px;
+            border:none;
+            border-radius:18px;
+            background:#888;
+            color:white;
+            cursor:pointer;
+        "
+        @onclick="ChangePin">
+            Change PIN
+        </button>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <p style="margin-top:8px; color:@messageColor;">
+                @message
+            </p>
+        }
+    </div>
+
+</div>
+
+@code {
+    private string userName = string.Empty;
+    private string oldPin = string.Empty;
+    private string newPin = string.Empty;
+
+    private string? message;
+    private string messageColor = "red";
+
+    
+
+    private async Task ChangePin()
+    {
+        if (newPin.Length < 4)
+        {
+            message = "New PIN must be at least 4 digits.";
+            messageColor = "red";
+            return;
+        }
+
+        var success = await AuthService.ChangePinAsync(
+            userName, oldPin, newPin);
+
+        if (success)
+        {
+            message = "PIN updated successfully.";
+            messageColor = "green";
+            userName = oldPin = newPin = string.Empty;
+        }
+        else
+        {
+            message = "Invalid username or old PIN.";
+            messageColor = "red";
+        }
+    }
+}

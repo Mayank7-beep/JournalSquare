@@ -1,0 +1,53 @@
+@page "/export"
+@using JournalSquare.Services
+
+@inject JournalService JournalService
+
+
+
+<h1>Export Journals</h1>
+
+<div class="export-box">
+
+    <label>Start Date</label>
+    <input type="date" @bind="startDate" />
+
+    <label>End Date</label>
+    <input type="date" @bind="endDate" />
+
+    
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p>@message</p>
+    }
+</div>
+
+@code {
+    private DateTime startDate = DateTime.Today.AddDays(-7);
+    private DateTime endDate = DateTime.Today;
+    private string? message;
+
+    private async Task GeneratePdf()
+    {
+        var entries = await JournalService.SearchAsync(
+            keyword: null,
+            startDate: startDate,
+            endDate: endDate,
+            primaryMood: null
+        );
+
+        if (entries.Count == 0)
+        {
+            message = "No journal entries found for selected dates.";
+            return;
+        }
+
+        
+
+       
+
+      
+    }
+
+}

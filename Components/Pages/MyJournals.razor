@@ -1,0 +1,159 @@
+@page "/MyJournals"
+
+@using JournalSquare.Models
+@using JournalSquare.Services
+
+@inject JournalService JournalService
+@inject NavigationManager Nav
+
+<h2 style="margin-bottom:6px;">My Journals</h2>
+
+<!-- SEARCH + SORT -->
+<div style="display:flex; gap:10px; margin-bottom:12px; align-items:center;">
+
+    <input placeholder="Search title, content, mood or tags"
+           value="@searchText"
+           @oninput="e => searchText = e.Value?.ToString() ?? string.Empty"
+           style="padding:6px; width:240px;" />
+
+    <button @onclick="Search" style="padding:6px 10px;">
+        Search
+    </button>
+
+    <select @bind="sortOrder" style="padding:6px;">
+        <option value="newest">Newest First</option>
+        <option value="oldest">Oldest First</option>
+    </select>
+
+    <button style="margin-left:auto; padding:6px 12px;"
+            @onclick="NewEntry">
+        + Write New Entry
+    </button>
+</div>
+
+@if (entries.Count == 0)
+{
+    <p>No journal entries found.</p>
+}
+else
+{
+    <table style="width:100%; border-collapse:collapse;">
+        <thead style="background:#ddd;">
+            <tr>
+                <th style="border:1px solid #aaa; padding:6px;">Date</th>
+                <th style="border:1px solid #aaa; padding:6px;">Title</th>
+                <th style="border:1px solid #aaa; padding:6px;">Mood</th>
+                <th style="border:1px solid #aaa; padding:6px;">Tags</th>
+                <th style="border:1px solid #aaa; padding:6px;">Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var entry in entries)
+            {
+                <tr>
+                    <td style="border:1px solid #ccc; padding:6px;">
+                        @entry.EntryDate.ToShortDateString()
+                    </td>
+
+                    <td style="border:1px solid #ccc; padding:6px;">
+                        @entry.Title
+                    </td>
+
+                    <td style="border:1px solid #ccc; padding:6px;">
+                        @entry.PrimaryMood
+                    </td>
+
+                    <td style="border:1px solid #ccc; padding:6px;">
+                        @entry.Tags
+                    </td>
+
+                    <td style="border:1px solid #ccc; padding:6px;">
+                        <button @onclick="() => EditEntry(entry.EntryDate)">✏️</button>
+                        <button style="color:red;"
+                                @onclick="() => DeleteEntry(entry.Id)">🗑</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<!-- PAGINATION -->
+<div style="margin-top:12px;">
+    <button @onclick="PrevPage" disabled="@(page == 1)">Previous</button>
+    <span style="margin:0 8px;">Page </span>
+    <button @onclick="NextPage" disabled="@(!hasMore)">Next</button>
+</div>
+
+@code {
+    private List<JournalEntry> entries = new();
+
+    private int page = 1;
+    private const int PageSize = 5;
+    private bool hasMore = true;
+
+    private string searchText = string.Empty;
+    private string sortOrder = "newest";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPage();
+    }
+
+    private async Task LoadPage()
+    {
+        entries = await JournalService.GetPagedEntriesAsync(page, PageSize);
+
+        entries = sortOrder == "oldest"
+            ? entries.OrderBy(e => e.EntryDate).ToList()
+            : entries.OrderByDescending(e => e.EntryDate).ToList();
+
+        hasMore = entries.Count == PageSize;
+    }
+
+    private async Task Search()
+    {
+        page = 1;
+
+        entries = await JournalService.SearchAsync(
+            searchText, null, null, null);
+
+        entries = sortOrder == "oldest"
+            ? entries.OrderBy(e => e.EntryDate).ToList()
+            : entries.OrderByDescending(e => e.EntryDate).ToList();
+
+        hasMore = false;
+    }
+
+    private async Task NextPage()
+    {
+        page++;
+        await LoadPage();
+    }
+
+    private async Task PrevPage()
+    {
+        if (page > 1)
+        {
+            page--;
+            await LoadPage();
+        }
+    }
+
+    private void EditEntry(DateTime date)
+    {
+        Nav.NavigateTo($"/entry?date={date:yyyy-MM-dd}");
+    }
+
+    private async Task DeleteEntry(int id)
+    {
+        await JournalService.DeleteEntryAsync(id);
+        await LoadPage();
+    }
+
+    private void NewEntry()
+    {
+        Nav.NavigateTo("/entry");
+    }
+}

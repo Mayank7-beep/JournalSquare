@@ -1,0 +1,128 @@
+@page "/calendar"
+@using JournalSquare.Models
+@using JournalSquare.Services
+
+@inject JournalService JournalService
+@inject NavigationManager Nav
+
+<h2 style="margin-bottom:12px;">Calendar</h2>
+
+<div style="
+    background:white;
+    padding:24px;
+    border-radius:8px;
+    width:100%;
+">
+
+    <!-- MONTH NAV -->
+    <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:16px;
+    ">
+        <button @onclick="PrevMonth">‹</button>
+
+        <h3>@currentMonth.ToString("MMMM yyyy")</h3>
+
+        <button @onclick="NextMonth">›</button>
+    </div>
+
+    <!-- WEEK HEADER -->
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(7, 1fr);
+        text-align:center;
+        font-weight:bold;
+        margin-bottom:6px;
+    ">
+        <div>Sun</div><div>Mon</div><div>Tue</div>
+        <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+
+    <!-- CALENDAR GRID -->
+    <div style="
+        display:grid;
+        grid-template-columns:repeat(7, 1fr);
+        gap:8px;
+    ">
+        @foreach (var day in calendarDays)
+        {
+            if (day == null)
+            {
+                <div></div>
+            }
+            else
+            {
+                var hasEntry = entryDates.Contains(day.Value.Date);
+
+                <div @onclick="() => OpenDay(day.Value)"
+                     style="
+                        height:80px;
+                        padding:8px;
+                        border-radius:6px;
+                        cursor:pointer;
+                        background:@(hasEntry ? "#bfb9b6" : "#f4f1ef");
+                        color:@(hasEntry ? "white" : "black");
+                     ">
+                    <div style="font-size:14px;">@day.Value.Day</div>
+                    @if (hasEntry)
+                    {
+                        <div style="font-size:11px;">Entry</div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+
+    private DateTime currentMonth = DateTime.Today;
+    private List<DateTime?> calendarDays = new();
+    private HashSet<DateTime> entryDates = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMonth();
+    }
+
+    private async Task LoadMonth()
+    {
+        calendarDays.Clear();
+        entryDates.Clear();
+
+        var entries = await JournalService.GetAllEntriesAsync();
+        entryDates = entries
+            .Select(e => e.EntryDate.Date)
+            .ToHashSet();
+
+        var firstDay = new DateTime(currentMonth.Year, currentMonth.Month, 1);
+        var startOffset = (int)firstDay.DayOfWeek;
+
+        for (int i = 0; i < startOffset; i++)
+            calendarDays.Add(null);
+
+        var daysInMonth = DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month);
+
+        for (int d = 1; d <= daysInMonth; d++)
+            calendarDays.Add(new DateTime(currentMonth.Year, currentMonth.Month, d));
+    }
+
+    private async Task PrevMonth()
+    {
+        currentMonth = currentMonth.AddMonths(-1);
+        await LoadMonth();
+    }
+
+    private async Task NextMonth()
+    {
+        currentMonth = currentMonth.AddMonths(1);
+        await LoadMonth();
+    }
+
+    private void OpenDay(DateTime date)
+    {
+        Nav.NavigateTo($"/entry?date={date:yyyy-MM-dd}");
+    }
+}
